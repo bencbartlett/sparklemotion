@@ -5,6 +5,7 @@ import baaahs.ShowPlayer
 import baaahs.app.ui.CommonIcons
 import baaahs.gl.GlContext
 import baaahs.gl.data.EngineFeed
+import baaahs.gl.data.Feed
 import baaahs.gl.data.ProgramFeed
 import baaahs.gl.data.SingleUniformFeed
 import baaahs.gl.glsl.GlslProgram
@@ -119,8 +120,8 @@ class BeatLinkPlugin internal constructor(
 
         override fun getType(): GlslType = GlslType.Float
 
-        override fun createFeed(showPlayer: ShowPlayer, id: String): baaahs.gl.data.Feed {
-            return object : baaahs.gl.data.Feed, RefCounted by RefCounter() {
+        override fun createFeed(showPlayer: ShowPlayer, id: String): Feed {
+            return object : Feed, RefCounted by RefCounter() {
                 override fun bind(gl: GlContext): EngineFeed = object : EngineFeed {
                     override fun bind(glslProgram: GlslProgram): ProgramFeed =
                         SingleUniformFeed(glslProgram, this@BeatLinkDataSource, id) { uniform ->
