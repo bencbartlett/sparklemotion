@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 buildscript {
     repositories {
+        mavenCentral()
         jcenter()
         maven("https://kotlin.bintray.com/kotlinx")
         maven("https://plugins.gradle.org/m2/")
@@ -32,6 +33,7 @@ val lwjglNatives = when {
 
 plugins {
     kotlin("multiplatform") version Versions.kotlin
+    application
     kotlin("plugin.serialization") version Versions.kotlin
     id("org.jetbrains.dokka") version "0.10.1"
     id("com.github.johnrengelman.shadow") version "5.2.0"
@@ -58,9 +60,14 @@ group = "org.baaahs"
 version = "0.0.1"
 
 kotlin {
-    jvm()
+    jvm {
+        withJava()
+    }
+
     js {
         browser {
+            binaries.executable()
+
             useCommonJs()
 
             webpackTask {
@@ -225,33 +232,63 @@ kotlin {
     }
 }
 
-// workaround for https://youtrack.jetbrains.com/issue/KT-24463:
-tasks.named<KotlinCompile>("compileKotlinJvm") {
-    dependsOn(":copySheepModel")
+application {
+    mainClassName = "baaahs.PinkyMainKt"
 }
 
-tasks.create<Copy>("copySheepModel") {
-    from("src/commonMain/resources")
-    into("build/classes/kotlin/jvm/main")
+tasks.getByName<JavaExec>("run") {
+    systemProperties["java.library.path"] = file("src/jvmMain/jni")
+
+//    val jvmMain = kotlin.targets["jvm"].compilations["main"] as KotlinCompilationToRunnableFiles
+//    classpath = files(jvmMain.output) + jvmMain.runtimeDependencyFiles
+    if (isMac()) {
+        jvmArgs = listOf(
+            "-XstartOnFirstThread", // required for OpenGL: https://github.com/LWJGL/lwjgl3/issues/311
+            "-Djava.awt.headless=true" // required for Beat Link; otherwise we get this: https://jogamp.org/bugzilla/show_bug.cgi?id=485
+        )
+    }
 }
+
+
+// include JS artifacts in any JAR we generate
+tasks.getByName<Jar>("jvmJar") {
+    val taskName = if (project.hasProperty("isProduction")) {
+        "jsBrowserProductionWebpack"
+    } else {
+        "jsBrowserDevelopmentWebpack"
+    }
+    val webpackTask = tasks.getByName<KotlinWebpack>(taskName)
+    dependsOn(webpackTask) // make sure JS gets compiled first
+    from(File(webpackTask.destinationDirectory, webpackTask.outputFileName)) // bring output file along into the JAR
+}
+
+//// workaround for https://youtrack.jetbrains.com/issue/KT-24463:
+//tasks.named<KotlinCompile>("compileKotlinJvm") {
+//    dependsOn(":copySheepModel")
+//}
+//
+//tasks.create<Copy>("copySheepModel") {
+//    from("src/commonMain/resources")
+//    into("build/classes/kotlin/jvm/main")
+//}
 
 tasks.withType(Kotlin2JsCompile::class) {
     kotlinOptions.sourceMap = true
     kotlinOptions.sourceMapEmbedSources = "always"
 }
 
-// see https://discuss.kotlinlang.org/t/kotlin-js-react-unstable-building/15582/6
-tasks.named<Kotlin2JsCompile>("compileKotlinJs") {
-    val outDir = outputFile.parent
-    val tempOutDir = "$outDir/kotlin-out"
-    kotlinOptions.outputFile = "$tempOutDir/${outputFile.name}"
-    doLast {
-        copy {
-            from(tempOutDir)
-            into(outDir)
-        }
-    }
-}
+//// see https://discuss.kotlinlang.org/t/kotlin-js-react-unstable-building/15582/6
+//tasks.named<Kotlin2JsCompile>("compileKotlinJs") {
+//    val outDir = outputFile.parent
+//    val tempOutDir = "$outDir/kotlin-out"
+//    kotlinOptions.outputFile = "$tempOutDir/${outputFile.name}"
+//    doLast {
+//        copy {
+//            from(tempOutDir)
+//            into(outDir)
+//        }
+//    }
+//}
 
 tasks.withType(KotlinWebpack::class) {
     sourceMaps = true
@@ -286,7 +323,7 @@ tasks.named<ProcessResources>("jsProcessResources") {
 }
 
 tasks.named<ProcessResources>("jvmProcessResources") {
-    from("build/distributions") { include("sparklemotion.js") }
+//    from("build/distributions") { include("sparklemotion.js") }
 
     doLast {
         createResourceFilesList(File(buildDir, "processedResources/jvm/main"))
@@ -347,24 +384,39 @@ tasks.create<JavaExec>("runGlslJvmTests") {
     }
 }
 
-tasks.create<Copy>("packageClientResources") {
-    dependsOn("jsProcessResources", "jsBrowserWebpack")
-    from(project.file("build/processedResources/js/main"))
-    from(project.file("build/distributions"))
-    into("build/classes/kotlin/jvm/main/htdocs")
-}
+//tasks.create<Copy>("packageClientResources") {
+//    dependsOn("jsProcessResources", "jsBrowserWebpack")
+//    from(project.file("build/processedResources/js/main"))
+//    from(project.file("build/distributions"))
+//    into("build/classes/kotlin/jvm/main/htdocs")
+//}
 
-tasks.named<Jar>("jvmJar") {
-    dependsOn("packageClientResources")
-}
+//tasks.named<Jar>("jvmJar") {
+//    dependsOn("packageClientResources")
+//}
+//
+//tasks.create<ShadowJar>("shadowJar") {
+//    dependsOn("jvmJar")
+//    from(tasks.named<Jar>("jvmJar").get().archiveFile)
+//    configurations = listOf(project.configurations["jvmRuntimeClasspath"])
+//    manifest {
+//        attributes["Main-Class"] = "baaahs.PinkyMainKt"
+//    }
+//}
 
-tasks.create<ShadowJar>("shadowJar") {
-    dependsOn("jvmJar")
-    from(tasks.named<Jar>("jvmJar").get().archiveFile)
-    configurations = listOf(project.configurations["jvmRuntimeClasspath"])
-    manifest {
-        attributes["Main-Class"] = "baaahs.PinkyMainKt"
+distributions {
+    main {
+        contents {
+            from("$buildDir/libs") {
+                rename("${rootProject.name}-jvm", rootProject.name)
+                into("lib")
+            }
+        }
     }
+}
+
+tasks.getByName<JavaExec>("run") {
+    classpath(tasks.getByName<Jar>("jvmJar")) // so that the JS artifacts generated by `jvmJar` can be found and served
 }
 
 tasks.withType(Test::class) {

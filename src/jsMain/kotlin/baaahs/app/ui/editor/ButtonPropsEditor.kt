@@ -37,7 +37,7 @@ private val buttonPropsEditor =
                     formControlLabel {
                         attrs.value = "Toggle"
                         attrs.control = radio {}
-                        attrs.label { +"Toggle" }
+                        attrs.label { +"Toggle!" }
                     }
                     formControlLabel {
                         attrs.value = "Momentary"
