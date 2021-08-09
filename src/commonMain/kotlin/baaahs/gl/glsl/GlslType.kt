@@ -14,7 +14,39 @@ sealed class GlslType constructor(
 
     val mutableDefaultInitializer: MutablePort get() = MutableConstPort(defaultInitializer.s, this)
 
+    fun arrayOf(count: kotlin.Int): Array = Array(this, count)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is GlslType) return false
+
+        if (glslLiteral != other.glslLiteral) return false
+
+        return true
+    }
+
+    override fun hashCode(): kotlin.Int {
+        return glslLiteral.hashCode()
+    }
+
+    override fun toString(): String {
+        return "GlslType($glslLiteral)"
+    }
+
+    object Bool : GlslType("bool", GlslExpr("false"))
+    object Float : GlslType("float", GlslExpr("0."))
+    object Matrix4 : GlslType("mat4")
+    object Vec2 : GlslType("vec2")
+    object Vec3 : GlslType("vec3")
+    object Vec4 : GlslType("vec4")
+    object Int : GlslType("int", GlslExpr("0"))
+    object Sampler2D : GlslType("sampler2D")
+    object Void : GlslType("void")
+
     private class OtherGlslType(glslLiteral: String) : GlslType(glslLiteral)
+
+    class Array(val type: GlslType, length: kotlin.Int) : GlslType("${type.glslLiteral}[$length]")
+
     class Struct(
         val name: String,
         val fields: Map<String, GlslType>,
@@ -79,33 +111,6 @@ sealed class GlslType constructor(
                     append(" }")
                 }.toString().let { GlslExpr(it) }
         }
-    }
-
-    object Bool : GlslType("bool", GlslExpr("false"))
-    object Float : GlslType("float", GlslExpr("0."))
-    object Matrix4 : GlslType("mat4")
-    object Vec2 : GlslType("vec2")
-    object Vec3 : GlslType("vec3")
-    object Vec4 : GlslType("vec4")
-    object Int : GlslType("int", GlslExpr("0"))
-    object Sampler2D : GlslType("sampler2D")
-    object Void : GlslType("void")
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is GlslType) return false
-
-        if (glslLiteral != other.glslLiteral) return false
-
-        return true
-    }
-
-    override fun hashCode(): kotlin.Int {
-        return glslLiteral.hashCode()
-    }
-
-    override fun toString(): String {
-        return "GlslType($glslLiteral)"
     }
 
     companion object {
