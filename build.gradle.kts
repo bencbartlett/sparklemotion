@@ -10,7 +10,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 buildscript {
     repositories {
         mavenCentral()
-        maven("https://plugins.gradle.org/m2/")
+        gradlePluginPortal()
+        google()
     }
 
     dependencies {
@@ -18,6 +19,7 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-serialization:${Versions.kotlin}")
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:${Versions.dokka}")
         classpath("com.github.jengelman.gradle.plugins:shadow:5.2.0")
+        classpath("com.android.tools.build:gradle:7.0.2")
     }
 }
 
@@ -31,6 +33,9 @@ val lwjglNatives = when {
 plugins {
     kotlin("multiplatform") version Versions.kotlin
     kotlin("plugin.serialization") version Versions.kotlin
+    kotlin("android") version Versions.kotlin
+    id("com.android.application")
+    id("kotlin-android-extensions")
     id("org.jetbrains.dokka") version Versions.dokka
     id("com.github.johnrengelman.shadow") version "5.2.0"
     id("com.github.ben-manes.versions") version "0.29.0"
@@ -40,6 +45,7 @@ plugins {
 
 repositories {
     mavenCentral()
+    google()
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers")
     maven("https://jitpack.io")
     maven("https://raw.githubusercontent.com/baaahs/kgl/mvnrepo")
@@ -62,6 +68,7 @@ kotlin {
             }
         }
     }
+    android()
 
     sourceSets {
         @Suppress("UNUSED_VARIABLE")
@@ -187,12 +194,43 @@ kotlin {
             }
         }
 
+        @Suppress("UNUSED_VARIABLE")
+        val androidMain by getting {
+            dependencies {
+            }
+        }
+        @Suppress("UNUSED_VARIABLE")
+        val androidTest by getting {
+            dependencies {
+            }
+        }
+
         sourceSets.all {
             languageSettings.apply {
                 progressiveMode = true
                 optIn("kotlin.ExperimentalStdlibApi")
             }
         }
+    }
+}
+
+android {
+    compileSdkVersion(30)
+
+    defaultConfig {
+        minSdkVersion(23)
+        targetSdkVersion(30)
+        versionCode = 1
+        versionName = "1.0"
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    packagingOptions {
+        exclude("META-INF/*")
     }
 }
 
