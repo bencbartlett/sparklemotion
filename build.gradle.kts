@@ -53,6 +53,7 @@ version = "0.0.1"
 kotlin {
     jvm()
     js(IR) {
+        binaries.executable()
         browser {
             useCommonJs()
 
