@@ -60,7 +60,7 @@ class BeatLinkPlugin internal constructor(
             classSerializer(BeatLinkControl.serializer())
         )
 
-    override val dataSourceBuilders: List<DataSourceBuilder<out DataSource>>
+    override val dataSourceBuilders
         get() = listOf(
             object : DataSourceBuilder<BeatLinkDataSource> {
                 override val title: String get() = "Beat Link"

@@ -1,12 +1,11 @@
 package baaahs.plugin.webcam
 
 import baaahs.document
+import baaahs.util.Logger
 import baaahs.window
+import com.danielgergely.kgl.TextureResource
 import kotlinext.js.jsObject
 import org.w3c.dom.HTMLVideoElement
-import three.js.MeshBasicMaterial
-import three.js.PlaneBufferGeometry
-import three.js.VideoTexture
 
 actual val DefaultVideoProvider: VideoProvider
     get() = BrowserWebCamVideoProvider
@@ -19,27 +18,30 @@ object BrowserWebCamVideoProvider : VideoProvider {
         document.body!!.appendChild(this)
     } as HTMLVideoElement
 
+    private val logger = Logger<BrowserWebCamVideoProvider>()
+
     init {
-        val texture = VideoTexture(videoElement);
-
-        val geometry = PlaneBufferGeometry(16, 9);
-        geometry.scale(0.5, 0.5, 0.5);
-        val material = MeshBasicMaterial(jsObject { map = texture })
-
+        logger.info { "Initializing." }
         window.navigator.mediaDevices.getUserMedia(jsObject {
             video = js(
                 "({" +
-                        "    width: { min: 1024, ideal: 1280, max: 1920 },\n" +
-                        "    height: { min: 776, ideal: 720, max: 1080 }\n" +
+                        "    width: { min: 320, ideal: 640, max: 1920 },\n" +
+                        "    height: { min: 200, ideal: 480, max: 1080 }\n" +
                         "})"
             )
         }).then { stream ->
+            logger.warn { "From getUserMedia" }
+            console.warn("From getUserMedia: ", stream)
             // apply the stream to the video element used in the texture
-            videoElement.srcObject = stream;
-            videoElement.play();
-
+            videoElement.srcObject = stream
+            videoElement.play()
         }.catch { error ->
-            console.error("Unable to access the camera/webcam.", error);
+            logger.error { "From getUserMedia" }
+            console.error("Unable to access the camera/webcam.", error)
         }
+    }
+
+    override fun getTextureResource(): TextureResource {
+        return TextureResource(videoElement)
     }
 }
