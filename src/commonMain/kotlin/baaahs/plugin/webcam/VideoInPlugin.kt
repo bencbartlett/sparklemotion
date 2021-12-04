@@ -5,6 +5,7 @@ import baaahs.gl.GlContext
 import baaahs.gl.data.EngineFeed
 import baaahs.gl.data.Feed
 import baaahs.gl.data.ProgramFeed
+import baaahs.gl.glsl.GlslCode
 import baaahs.gl.glsl.GlslProgram
 import baaahs.gl.glsl.GlslType
 import baaahs.gl.patch.ContentType
@@ -38,6 +39,9 @@ class VideoInPlugin(private val videoProvider: VideoProvider) : OpenServerPlugin
                     get() = objectSerializer("$id:$resourceName", videoInDataSource)
 
                 override fun build(inputPort: InputPort) = videoInDataSource
+
+                override fun funDef(varName: String): String =
+                    "vec4 $varName(vec2 uv);"
             }
         )
 
@@ -48,6 +52,21 @@ class VideoInPlugin(private val videoProvider: VideoProvider) : OpenServerPlugin
         override fun getType(): GlslType = GlslType.Sampler2D
         override val contentType: ContentType get() = ContentType.Color
 
+        override fun appendDeclaration(buf: StringBuilder, id: String) {
+            val textureUniformId = "ds_${getVarName(id)}_texture"
+            buf.append("""
+                uniform sampler2D $textureUniformId;
+
+            """.trimIndent())
+        }
+
+        override fun appendInvoke(buf: StringBuilder, varName: String, inputPort: InputPort) {
+            val fn = inputPort.glslArgSite as GlslCode.GlslFunction
+
+            val textureUniformId = "ds_${getVarName(varName)}_texture"
+            buf.append("texture($textureUniformId, ${fn.params[0].name})")
+        }
+
         override fun createFeed(showPlayer: ShowPlayer, id: String): Feed {
             return object : Feed, RefCounted by RefCounter() {
                 override fun bind(gl: GlContext): EngineFeed = object : EngineFeed {
@@ -55,7 +74,7 @@ class VideoInPlugin(private val videoProvider: VideoProvider) : OpenServerPlugin
                     private val texture = gl.check { createTexture() }
 
                     override fun bind(glslProgram: GlslProgram): ProgramFeed = object : ProgramFeed {
-                        val videoUniform = glslProgram.getUniform(videoInDataSource.getVarName(id))
+                        val videoUniform = glslProgram.getUniform("ds_${getVarName(id)}_texture")
                         override val isValid: Boolean
                             get() = videoUniform != null
 
