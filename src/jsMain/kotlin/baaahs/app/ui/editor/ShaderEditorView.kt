@@ -1,5 +1,6 @@
 package baaahs.app.ui.editor
 
+import ReactAce.Ace.IAceOptions
 import acex.*
 import baaahs.app.ui.appContext
 import baaahs.boundedBy
@@ -65,6 +66,22 @@ private val ShaderEditorView = xComponent<ShaderEditorProps>("ShaderEditor") { p
             editor.getSession().setAnnotations(annotations)
         }
         setAnnotations()
+
+        val completers = editor.completers
+        console.log("completers", completers)
+        editor.completers.asDynamic().push(
+            object : Completer {
+                override fun getCompletions(
+                    editor: Editor,
+                    session: EditSession,
+                    position: Point,
+                    prefix: String,
+                    callback: CompleterCallback
+                ) {
+                    println("position = $position prefix = $prefix")
+                }
+            }
+        )
 
         val compilationObserver = editingShader.addObserver {
             when (editingShader.state) {
