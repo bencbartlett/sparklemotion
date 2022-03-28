@@ -1,14 +1,11 @@
 package baaahs.plugin.webcam
 
-import baaahs.ImmediateDispatcher
 import baaahs.describe
-import baaahs.fakeModel
 import baaahs.gl.RootToolchain
 import baaahs.gl.autoWire
 import baaahs.gl.openShader
 import baaahs.gl.patch.AutoWirer
 import baaahs.gl.patch.ContentType
-import baaahs.gl.preview.PreviewShaderBuilder
 import baaahs.gl.shader.type.PaintShader
 import baaahs.plugin.ClientPlugins
 import baaahs.plugin.Plugins
@@ -17,7 +14,6 @@ import baaahs.show.Shader
 import baaahs.toEqual
 import ch.tutteli.atrium.api.verbs.expect
 import com.danielgergely.kgl.TextureResource
-import kotlinx.coroutines.CoroutineScope
 import org.spekframework.spek2.Spek
 
 object VideoInPluginSpec : Spek({
@@ -102,18 +98,18 @@ object VideoInPluginSpec : Spek({
             )
         }
 
-        context("shader preview") {
-            val builder by value {
-                PreviewShaderBuilder(
-                    openShader, toolchain, fakeModel(), CoroutineScope(ImmediateDispatcher)
-                )
-            }
-
-            it("generates a good preview") {
-                builder.linkedPatch!!.rootNode
-                val x = builder
-                println("builder = $x")
-            }
-        }
+//        context("shader preview") {
+//            val builder by value {
+//                PreviewShaderBuilder(
+//                    openShader, toolchain, fakeModel(), CoroutineScope(ImmediateDispatcher)
+//                )
+//            }
+//
+//            it("generates a good preview") {
+//                builder.linkedPatch!!.rootNode
+//                val x = builder
+//                println("builder = $x")
+//            }
+//        }
     }
 })
