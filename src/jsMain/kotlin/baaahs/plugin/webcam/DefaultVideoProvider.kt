@@ -4,7 +4,7 @@ import baaahs.document
 import baaahs.util.Logger
 import baaahs.window
 import com.danielgergely.kgl.TextureResource
-import kotlinext.js.jsObject
+import kotlinx.js.jso
 import org.w3c.dom.HTMLVideoElement
 
 actual val DefaultVideoProvider: VideoProvider
@@ -22,7 +22,7 @@ object BrowserWebCamVideoProvider : VideoProvider {
 
     init {
         logger.info { "Initializing." }
-        window.navigator.mediaDevices.getUserMedia(jsObject {
+        window.navigator.mediaDevices.getUserMedia(jso {
             video = js(
                 "({" +
                         "    width: { min: 320, ideal: 640, max: 1920 },\n" +
