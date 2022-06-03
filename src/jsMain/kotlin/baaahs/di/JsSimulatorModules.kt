@@ -8,6 +8,8 @@ import baaahs.controller.ControllersManager
 import baaahs.dmx.Dmx
 import baaahs.io.Fs
 import baaahs.mapping.MappingManager
+import baaahs.midi.MidiDevices
+import baaahs.midi.NullMidiDevices
 import baaahs.net.BrowserNetwork
 import baaahs.net.Network
 import baaahs.plugin.Plugins
@@ -94,6 +96,8 @@ class JsSimPinkyModule(
         get() = simMappingManager
     override val Scope.dmxDriver: Dmx.Driver
         get() = SimDmxDriver(get(named("Fallback")))
+    override val Scope.midiDevices: MidiDevices
+        get() = NullMidiDevices()
     override val Scope.pinkySettings: PinkySettings
         get() = pinkySettings_
     override val Scope.sceneMonitor: SceneMonitor

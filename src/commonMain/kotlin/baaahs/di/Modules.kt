@@ -20,6 +20,7 @@ import baaahs.libraries.ShaderLibraryManager
 import baaahs.mapper.Storage
 import baaahs.mapping.MappingManager
 import baaahs.mapping.MappingManagerImpl
+import baaahs.midi.MidiDevices
 import baaahs.model.ModelManager
 import baaahs.model.ModelManagerImpl
 import baaahs.net.Network
@@ -36,6 +37,7 @@ import baaahs.sm.brain.BrainManager
 import baaahs.sm.brain.FirmwareDaddy
 import baaahs.sm.brain.ProdBrainSimulator
 import baaahs.sm.brain.proto.Ports
+import baaahs.sm.server.EventManager
 import baaahs.sm.server.GadgetManager
 import baaahs.sm.server.ServerNotices
 import baaahs.sm.server.StageManager
@@ -82,6 +84,7 @@ interface PinkyModule : KModule {
     val Scope.pinkyLink: Network.Link get() = get<Network>().link("pinky")
     val Scope.backupMappingManager: MappingManager? get() = null
     val Scope.dmxDriver: Dmx.Driver
+    val Scope.midiDevices: MidiDevices
     val Scope.pinkySettings: PinkySettings
     val Scope.sceneMonitor: SceneMonitor get() = SceneMonitor()
 
@@ -111,6 +114,7 @@ interface PinkyModule : KModule {
                 scoped<PubSub.Endpoint> { get<PubSub.Server>() }
                 scoped<PubSub.IServer> { get<PubSub.Server>() }
                 scoped { dmxDriver }
+                scoped { midiDevices }
                 scoped { DmxUniverseListener(get()) }
                 scoped<Dmx.UniverseListener> { get<DmxUniverseListener>() }
                 scoped<DmxManager> { DmxManagerImpl(get(), get(), get(fallbackDmxUniverse), get(), get(), get()) }
@@ -121,7 +125,8 @@ interface PinkyModule : KModule {
                 scoped<FixtureManager> { FixtureManagerImpl(get(), get()) }
                 scoped { GadgetManager(get(), get(), get(pinkyContext)) }
                 scoped<Toolchain> { RootToolchain(get()) }
-                scoped { StageManager(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+                scoped { EventManager(get(), get()) }
+                scoped { StageManager(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
                 scoped { Pinky.NetworkStats() }
                 scoped { BrainManager(get(), get(), get(), get(), get(pinkyContext)) }
                 scoped { SacnManager(get(), get(pinkyContext), get(), get()) }
