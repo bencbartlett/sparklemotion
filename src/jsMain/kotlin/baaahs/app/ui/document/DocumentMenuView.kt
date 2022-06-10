@@ -5,9 +5,18 @@ import baaahs.app.ui.appContext
 import baaahs.client.document.DocumentManager
 import baaahs.ui.*
 import baaahs.ui.DialogMenuItem.*
+import csstype.*
+import dropzone
+import kotlinx.js.jso
 import materialui.icon
 import mui.material.*
+import org.w3c.files.File
 import react.*
+import react.dom.button
+import react.dom.div
+import react.dom.input
+import react.dom.onClick
+import renderDropzone
 
 private val DocumentMenuView = xComponent<DocumentMenuProps>("DocumentMenu") { props ->
     val appContext = useContext(appContext)
@@ -91,6 +100,15 @@ private val DocumentMenuView = xComponent<DocumentMenuProps>("DocumentMenu") { p
         launch { documentManager.onDownload() }
     }
 
+    var showUpload by state { false }
+    val handleUpload by mouseEventHandler(documentManager) {
+        showUpload = true
+    }
+
+    val handleUploadDrop by handler { files: Array<File> ->
+
+    }
+
     val handleClose = callback(documentManager) {
         launch { documentManager.onClose() }
     }
@@ -133,6 +151,12 @@ private val DocumentMenuView = xComponent<DocumentMenuProps>("DocumentMenu") { p
     }
 
     ListItemButton {
+        attrs.onClick = handleUpload
+        ListItemIcon { icon(CommonIcons.Upload) }
+        ListItemText { attrs.primary = buildElement { +"Upload $typeTitle…" } }
+    }
+
+    ListItemButton {
         attrs.disabled = !documentManager.isLoaded
         attrs.onClick = handleClose.withMouseEvent()
         ListItemIcon { icon(mui.icons.material.Close) }
@@ -140,6 +164,47 @@ private val DocumentMenuView = xComponent<DocumentMenuProps>("DocumentMenu") { p
     }
 
     renderDialog?.invoke(this)
+
+    if (showUpload) {
+        Modal {
+            attrs.open = true
+
+            Box {
+                attrs.sx = jso {
+                    this.position = Position.absolute
+                    this.top = 50.pct
+                    this.left = 50.pct
+                    this.transform = translate((-50).pct)
+                    this.width = 400.px
+                    this.backgroundColor = Color("background.paper")
+                    this.border = Border(2.px, LineStyle.solid, NamedColor.black)
+                    this.boxShadow = "24".unsafeCast<BoxShadow>()
+                    this.padding = 4.px
+                }
+
+                dropzone {
+                    attrs.onDrop = handleUploadDrop
+                    attrs.onFileDialogCancel
+
+                    renderDropzone { rootProps, inputProps ->
+                        div {
+                            mixin(rootProps)
+
+                            input {
+                                mixin(inputProps)
+                            }
+                            +"Drag a $typeTitle here."
+                        }
+
+                        button {
+                            attrs.onClick = { showUpload = false }
+                            +"Cancel"
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 external interface DocumentMenuProps : Props {
